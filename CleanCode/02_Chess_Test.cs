@@ -16,7 +16,7 @@ namespace CleanCode
 				if (Path.GetExtension(file) != string.Empty) continue;
 				using (var f = File.OpenText(file))
 				{
-					var actualAnswer = new Chess(new Board(f)).getWhiteStatus();
+					var actualAnswer = new Chess(new Board(f)).GetWhiteStatus();
 					var expectedAnswer = File.ReadAllText(file + ".ans").Trim();
 					Assert.AreEqual(expectedAnswer, actualAnswer, "error in file " + file);
 				}

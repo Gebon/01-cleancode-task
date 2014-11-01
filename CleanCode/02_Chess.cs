@@ -1,52 +1,53 @@
-﻿namespace CleanCode
+﻿using System.Linq;
+using NUnit.Framework;
+
+namespace CleanCode
 {
-	public class Chess
-	{
-		private readonly Board b;
+    public class Chess
+    {
+        private readonly Board board;
 
-		public Chess(Board b)
-		{
-		this.b = b;
-		}
+        public Chess(Board board)
+        {
+            this.board = board;
+        }
 
-		public string getWhiteStatus() {
-			bool bad=checkForWhite();
-			bool ok=  false;
-			foreach (Loc loc1 in b.Figures(Cell.White))
-			{
-				foreach (Loc loc2 in b.Get(loc1).Figure.Moves(loc1, b)){
-				Cell old_dest = b.PerformMove(loc1, loc2);
-				if (!checkForWhite( ))
-					ok = true;
-				b.PerformUndoMove(loc1, loc2, old_dest);
-				}
-				
-				
-				
-			}
-			if (bad)
-				if (ok)
-					return "check";
-				else return "mate";
-				if (ok)	return "ok";
-			return "stalemate";
-		}
+        public string GetWhiteStatus()
+        {
+            var whiteUnderAttack = IsCheckForWhite();
+            var canAvoidCheck = CanAvoidCheck();
+            return GetGameState(whiteUnderAttack, canAvoidCheck);
+        }
 
-		private bool checkForWhite()
-		{
-			bool bFlag = false;
-			foreach (Loc loc in b.Figures(Cell.Black))
-			{
-				var cell = b.Get(loc);
-				var moves = cell.Figure.Moves(loc, b);
-				foreach (Loc to in moves)
-				{
-					if (b.Get(to).IsWhiteKing)
-						bFlag = true;
-				}
-			}
-			if (bFlag) return true;
-			return false;
-		}
-	}
+        private static string GetGameState(bool whiteUnderAttack, bool canAvoidCheck)
+        {
+            if (whiteUnderAttack)
+                return canAvoidCheck ? "check" : "mate";
+            return canAvoidCheck ? "ok" : "stalemate";
+        }
+
+        private bool CanAvoidCheck()
+        {
+            return board.Figures(Cell.White)
+                .Any(cell => board.Get(cell).Figure.Moves(cell, board).Any(move => !UnderAttack(cell, move)));
+        }
+
+        private bool UnderAttack(Loc cell, Loc move)
+        {
+            var isUnderAttack = false;
+            var oldLocation = board.PerformMove(cell, move);
+            if (IsCheckForWhite())
+                isUnderAttack = true;
+            board.PerformUndoMove(cell, move, oldLocation);
+            return isUnderAttack;
+        }
+
+        private bool IsCheckForWhite()
+        {
+            return board.Figures(Cell.Black)
+                .Any(
+                    location =>
+                        board.Get(location).Figure.Moves(location, board).Any(move => board.Get(move).IsWhiteKing));
+        }
+    }
 }
